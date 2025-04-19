@@ -1,0 +1,72 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" // Change selon ta BD (mysql, sqlite...)
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  CANDIDAT
+  RECRUTEUR
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  role      Role
+  fullName  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Candidat   Candidat?
+  Recruteur  Recruteur?
+}
+
+model Candidat {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @unique
+  age        Int
+  cv         String?  // URL du CV
+  experience String?
+
+  user       User     @relation(fields: [userId], references: [id])
+  applications Application[]
+}
+
+model Recruteur {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
+  company   String
+  position  String
+
+  user      User     @relation(fields: [userId], references: [id])
+  jobs      Job[]
+}
+
+model Job {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  location    String?
+  salary      String?
+  recruiterId Int
+
+  recruiter   Recruteur @relation(fields: [recruiterId], references: [id])
+  applications Application[]
+  createdAt   DateTime @default(now())
+}
+
+model Application {
+  id         Int      @id @default(autoincrement())
+  jobId      Int
+  candidatId Int
+  status     String   @default("PENDING") // PENDING, ACCEPTED, REJECTED
+  appliedAt  DateTime @default(now())
+
+  job        Job      @relation(fields: [jobId], references: [id])
+  candidat   Candidat @relation(fields: [candidatId], references: [id])
+}
